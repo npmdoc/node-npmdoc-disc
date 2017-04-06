@@ -1,0 +1,259 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/hughsk/disc"
+
+    >disc (v1.3.2)</a>
+</h1>
+<h4>A tool for analyzing the module tree of a browserify bundle or node project</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.disc">module disc</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.disc.bundle">
+            function <span class="apidocSignatureSpan">disc.</span>bundle
+            <span class="apidocSignatureSpan">(bundles, opts, callback)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.disc.json">
+            function <span class="apidocSignatureSpan">disc.</span>json
+            <span class="apidocSignatureSpan">(bundles, callback)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.disc" id="apidoc.module.disc">module disc</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.disc.bundle" id="apidoc.element.disc.bundle">
+        function <span class="apidocSignatureSpan">disc.</span>bundle
+        <span class="apidocSignatureSpan">(bundles, opts, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function bundle(bundles, opts, callback) {
+  bundles = Array.isArray(bundles)
+    ? bundles
+    : bundles ? [bundles] : []
+
+  if (typeof opts === &#x27;function&#x27;) {
+    callback = opts
+    opts = {}
+  }
+
+  opts = opts || {}
+  callback = callback || noop
+
+  var header = opts.header || opts.button || &#x27;&#x27;
+  var footer = opts.footer || &#x27;&#x27;
+
+  return json(bundles, function(err, data) {
+    if (err) return callback(err)
+
+    data.mode = opts.mode || &#x27;size&#x27;
+    data = &#x27;&#x3c;script type=&#x22;text/javascript&#x22;&#x3e;&#x27;
+      + &#x27;;window.disc = (&#x27;
+      + JSON.stringify(data)
+      + &#x27;);&#x3c;/script&#x3e;&#x27;
+
+    var script = &#x27;&#x3c;script type=&#x22;text/javascript&#x22;&#x3e;&#x27;
+      + bundled().replace(/\/script/gi, &#x27;\\/script&#x27;)
+      + &#x27;&#x3c;/script&#x3e;&#x27;
+
+    callback(null, template()({
+        scripts: script
+      , styles: styles()
+      , markdown: footer
+      , header: header
+      , data: data
+    }))
+  })
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+var input = __dirname + &#x27;/index.js&#x27;
+var output = __dirname + &#x27;/disc.html&#x27;
+
+var bundler = browserify(input, {
+  fullPaths: true
+})
+
+bundler.<span class="apidocCodeKeywordSpan">bundle</span>()
+  .pipe(disc())
+  .pipe(fs.createWriteStream(output))
+  .once(&#x27;close&#x27;, function() {
+    open(output)
+  })
+```
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.disc.json" id="apidoc.element.disc.json">
+        function <span class="apidocSignatureSpan">disc.</span>json
+        <span class="apidocSignatureSpan">(bundles, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function json(bundles, callback) {
+  var modules = flatten(bundles
+    .map(String)
+    .map(unpack)
+  ).map(function(module) {
+    if (typeof module === &#x27;undefined&#x27;) return callback(new Error(
+      &#x27;Unable to compile one of the supplied bundles!&#x27;
+    ))
+
+    if (typeof module.id !== &#x27;number&#x27;) return module
+
+    return callback(new Error(
+      &#x27;Please recompile this browserify bundle using the --full-paths flag &#x27; +
+      &#x27;(when using the command-line interface) or with the fullPaths option &#x27; +
+      &#x27;set to true (when using the JavaScript API).&#x27;
+    ))
+  })
+
+  modules = modules.filter(function(module) {
+    return module &#x26;&#x26; !isEmpty(module)
+  })
+
+  if (!modules.length) return
+
+  var browserifyModules = modules.filter(fromBrowserify(true))
+  var otherModules = modules.filter(function(module) {
+    if (path.basename(module.id) === &#x27;_empty.js&#x27;) return false
+    if (browserifyModules.indexOf(module) === -1) return true
+  })
+
+  var root = commondir(otherModules.map(pluck(&#x27;id&#x27;)))
+
+  browserifyModules.forEach(function(module) {
+    var regex = /^.+\/node_modules\/browserify\/(?:node_modules\/)(.+)$/g
+
+    module.id = module.id.replace(regex, function(_, subpath) {
+      return path.resolve(root, &#x27;browserify-core/&#x27; + subpath)
+    })
+
+    return module
+  })
+
+  uniq(modules, function(a, b) {
+    return a.id === b.id ? 0 : 1
+  }, true)
+
+  var ids  = modules.map(pluck(&#x27;id&#x27;))
+  var main = path.basename(root)
+
+  var byid = modules.reduce(function(memo, mod) {
+    memo[mod.id] = mod
+    return memo
+  }, {})
+
+  fileTree(ids, function(id, next) {
+    var row = byid[id]
+
+    next(null, {
+        size: row.source.length
+      , deps: Object.keys(row.deps).length
+      , path: id
+    })
+  }, function(err, tree) {
+    if (err) return callback(err)
+
+    tree = { name: main, children: tree }
+    dirsizes(tree)
+    versions(tree)
+    callback(null, tree)
+  })
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+A callback-style interface for disc: takes an array of `bundles` (note: the
+file contents and not the file names), calling `callback(err, html)` with
+either an error or the resulting standalone HTML file as arguments.
+
+This currently mirrors how disc is currently implemented, but the stream API is
+a little more convenient to work with.
+
+### `disc.<span class="apidocCodeKeywordSpan">json</span>(bundles, callback)` ###
+
+Takes an array of bundle contents (as strings, or Buffers), and gathers the
+required data - calling `callback(err, json)` with either an error or the
+results.
+
+## Palettes ##
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
