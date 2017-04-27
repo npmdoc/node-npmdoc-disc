@@ -1,6 +1,6 @@
 # npmdoc-disc
 
-#### api documentation for  [disc (v1.3.2)](https://github.com/hughsk/disc)  [![npm package](https://img.shields.io/npm/v/npmdoc-disc.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-disc) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-disc.svg)](https://travis-ci.org/npmdoc/node-npmdoc-disc)
+#### basic api documentation for  [disc (v1.3.2)](https://github.com/hughsk/disc)  [![npm package](https://img.shields.io/npm/v/npmdoc-disc.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-disc) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-disc.svg)](https://travis-ci.org/npmdoc/node-npmdoc-disc)
 
 #### A tool for analyzing the module tree of a browserify bundle or node project
 
